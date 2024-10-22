@@ -1,5 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { UpdateUserDto } from './dto/update-user.dto';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -7,81 +12,60 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
-  async create(
-    data: Prisma.UserCreateInput,
-  ): Promise<{ message: string; user?: User }> {
-    try {
-      const existingUser = await this.prisma.user.findUnique({
-        where: { email: data.email },
-      });
+  async create(data: Prisma.UserCreateInput): Promise<User> {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
 
-      if (existingUser) {
-        throw new Error('Email já cadastrado');
-      }
-
-      if (data.password) {
-        data.password = await bcrypt.hash(data.password, 10);
-      }
-
-      await this.prisma.user.create({
-        data,
-      });
-      return {
-        message: 'Usuário Criado com Sucesso',
-      };
-    } catch (error) {
-      if (error.message === 'Email já cadastrado') {
-        throw new Error(error.message);
-      }
-      throw new Error(`Erro ao criar o usuário: ${error.message}`);
+    if (existingUser) {
+      throw new ConflictException('Email já cadastrado');
     }
+
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+
+    return this.prisma.user.create({ data });
   }
 
   async findAll(): Promise<User[]> {
     return this.prisma.user.findMany();
   }
 
-  async findOne(id: number): Promise<{ message?: string; user?: User }> {
+  async findOne(id: number): Promise<User> {
     try {
-      if (isNaN(id)) {
-        return {
-          message: `O id fornecido é inválido. Deve ser um número.`,
-        };
+      if (typeof id !== 'number' || isNaN(id)) {
+        throw new BadRequestException('O ID deve ser um número válido.');
       }
-      const numericId = Number(id);
-
       const user = await this.prisma.user.findUnique({
         where: { id },
       });
 
       if (!user) {
-        return { message: `Usuário com esse id ${id} não encontrado` };
+        throw new NotFoundException('Usuário não encontrado.');
       }
-      return { user };
+      return user;
     } catch (error) {
-      return { message: `Erro ao buscar o usuário: ${error.message}` };
+      throw error;
     }
   }
 
-  async update(
-    id: number,
-    data: Prisma.UserUpdateInput,
-  ): Promise<{ message?: string; user?: User }> {
+  async update(id: number, data: Prisma.UserUpdateInput): Promise<User> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
       });
       if (!user) {
-        return { message: 'Usuário não encontrado' };
+        throw new NotFoundException(`Usuário não encontrado.`);
       }
 
       if (data.email) {
         const existingUser = await this.prisma.user.findUnique({
-          where: { email: user.email },
+          where: { email: data.email as string },
         });
 
         if (existingUser && existingUser.id !== id) {
-          return { message: 'Email já cadastrado' };
+          throw new ConflictException('Email já cadastrado');
         }
       }
 
@@ -90,29 +74,26 @@ export class UsersService {
         data.password = await bcrypt.hash(data.password, salt);
       }
 
-      await this.prisma.user.update({
+      return await this.prisma.user.update({
         where: { id },
         data,
       });
-      return { message: 'Usuário atualizado com Sucesso' };
     } catch (error) {
-      return { message: `Erro ao atualizar o usuário: ${error.message}` };
+      throw error;
     }
   }
 
-  async remove(id: number): Promise<{ message?: string; user?: User }> {
+  async remove(id: number): Promise<User> {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
 
     if (!user) {
-      return { message: 'Usuário não encontrado' };
+      throw new NotFoundException(`Usuário com o Id ${id} não encontrado.`);
     }
 
-    await this.prisma.user.delete({
+    return await this.prisma.user.delete({
       where: { id },
     });
-
-    return { message: 'Usuário deletado com Sucesso' };
   }
 }

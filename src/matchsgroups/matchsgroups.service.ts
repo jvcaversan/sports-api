@@ -1,26 +1,94 @@
-import { Injectable } from '@nestjs/common';
-import { CreateMatchsgroupDto } from './dto/create-matchsgroup.dto';
-import { UpdateMatchsgroupDto } from './dto/update-matchsgroup.dto';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from 'src/database/prisma.service';
+import { Prisma, User } from '@prisma/client';
+import { MatchGroup } from '.prisma/client';
 
 @Injectable()
-export class MatchsgroupsService {
-  create(createMatchsgroupDto: CreateMatchsgroupDto) {
-    return 'This action adds a new matchsgroup';
+export class MatchGroupService {
+  constructor(private prisma: PrismaService) {}
+  async create(data: Prisma.MatchGroupCreateInput): Promise<MatchGroup> {
+    const existingMatchGroup = await this.prisma.matchGroup.findUnique({
+      where: { name: data.name },
+    });
+
+    if (existingMatchGroup) {
+      throw new ConflictException('Grupo já cadastrado');
+    }
+
+    return this.prisma.matchGroup.create({ data });
   }
 
-  findAll() {
-    return `This action returns all matchsgroups`;
+  async findAll(): Promise<MatchGroup[]> {
+    return this.prisma.matchGroup.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} matchsgroup`;
+  async findOne(id: number): Promise<MatchGroup> {
+    try {
+      if (typeof id !== 'number' || isNaN(id)) {
+        throw new BadRequestException('O ID deve ser um número válido.');
+      }
+      const matchGroup = await this.prisma.matchGroup.findUnique({
+        where: { id },
+      });
+
+      if (!matchGroup) {
+        throw new NotFoundException('Usuário não encontrado.');
+      }
+      return matchGroup;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  update(id: number, updateMatchsgroupDto: UpdateMatchsgroupDto) {
-    return `This action updates a #${id} matchsgroup`;
+  async update(
+    id: number,
+    data: Prisma.MatchGroupUpdateInput,
+  ): Promise<MatchGroup> {
+    try {
+      const matchGroup = await this.prisma.matchGroup.findUnique({
+        where: { id },
+      });
+      if (!matchGroup) {
+        throw new NotFoundException(`Grupo de partidas não encontrado.`);
+      }
+
+      if (data.name) {
+        const existingMatchGroup = await this.prisma.matchGroup.findUnique({
+          where: { name: data.name as string },
+        });
+
+        if (existingMatchGroup && existingMatchGroup.id !== id) {
+          throw new ConflictException('Email já cadastrado');
+        }
+      }
+
+      return await this.prisma.matchGroup.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} matchsgroup`;
+  async remove(id: number): Promise<MatchGroup> {
+    const matchGroup = await this.prisma.matchGroup.findUnique({
+      where: { id },
+    });
+
+    if (!matchGroup) {
+      throw new NotFoundException(
+        `Grupo de partidas com o Id ${id} não encontrado.`,
+      );
+    }
+
+    return await this.prisma.matchGroup.delete({
+      where: { id },
+    });
   }
 }

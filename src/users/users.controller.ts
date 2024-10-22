@@ -20,12 +20,7 @@ export class UsersController {
 
   @Post()
   async createUser(@Body() data: CreateUserDto) {
-    try {
-      const result = await this.usersService.create(data);
-      return result;
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    return await this.usersService.create(data);
   }
 
   @Get()
@@ -34,7 +29,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<{ message?: string; user?: User }> {
+  findOne(@Param('id') id: string): Promise<User> {
     return this.usersService.findOne(+id);
   }
 
@@ -42,7 +37,7 @@ export class UsersController {
   async update(
     @Param('id') id: string,
     @Body() data: UpdateUserDto,
-  ): Promise<{ message?: string; user?: User }> {
+  ): Promise<User> {
     return this.usersService.update(Number(id), data);
   }
 
