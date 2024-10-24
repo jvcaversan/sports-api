@@ -1,7 +1,7 @@
+import { UsersRepository } from './users.repository';
 import {
   BadRequestException,
   ConflictException,
-  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,11 +11,9 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
-  async create(data: Prisma.UserCreateInput): Promise<User> {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
+  constructor(private readonly userRepository: UsersRepository) {}
+  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+    const existingUser = await this.userRepository.findByEmail(data.email);
 
     if (existingUser) {
       throw new ConflictException('Email já cadastrado');
@@ -25,21 +23,23 @@ export class UsersService {
       data.password = await bcrypt.hash(data.password, 10);
     }
 
-    return this.prisma.user.create({ data });
+    const user = await this.userRepository.create(data);
+
+    return user;
   }
 
-  async findAll(): Promise<User[]> {
-    return this.prisma.user.findMany();
+  async findAllUsers(): Promise<User[]> {
+    const users = await this.userRepository.findAllUsers();
+
+    return users;
   }
 
-  async findOne(id: number): Promise<User> {
+  async findById(id: number): Promise<User> {
     try {
       if (typeof id !== 'number' || isNaN(id)) {
         throw new BadRequestException('O ID deve ser um número válido.');
       }
-      const user = await this.prisma.user.findUnique({
-        where: { id },
-      });
+      const user = await this.userRepository.findById(id);
 
       if (!user) {
         throw new NotFoundException('Usuário não encontrado.');
@@ -50,19 +50,17 @@ export class UsersService {
     }
   }
 
-  async update(id: number, data: Prisma.UserUpdateInput): Promise<User> {
+  async updateById(id: number, data: Prisma.UserUpdateInput): Promise<User> {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: { id },
-      });
+      const user = await this.userRepository.findById(id);
       if (!user) {
         throw new NotFoundException(`Usuário não encontrado.`);
       }
 
       if (data.email) {
-        const existingUser = await this.prisma.user.findUnique({
-          where: { email: data.email as string },
-        });
+        const existingUser = await this.userRepository.findByEmail(
+          data.email as string,
+        );
 
         if (existingUser && existingUser.id !== id) {
           throw new ConflictException('Email já cadastrado');
@@ -74,26 +72,29 @@ export class UsersService {
         data.password = await bcrypt.hash(data.password, salt);
       }
 
-      return await this.prisma.user.update({
-        where: { id },
-        data,
-      });
+      return await this.userRepository.updateById(id, data);
     } catch (error) {
       throw error;
     }
   }
 
-  async remove(id: number): Promise<User> {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-    });
+  async remove(id: number) {
+    if (typeof id !== 'number' || isNaN(id)) {
+      throw new BadRequestException('O ID deve ser um número válido.');
+    }
+
+    const user = await this.userRepository.findById(id);
 
     if (!user) {
       throw new NotFoundException(`Usuário com o Id ${id} não encontrado.`);
     }
 
-    return await this.prisma.user.delete({
-      where: { id },
-    });
+    if (user.profile) {
+      await this.userRepository.removeProfile(id);
+    }
+
+    await this.userRepository.removeUser(id);
+
+    return { message: 'Usuario Deletado com sucesso' };
   }
 }

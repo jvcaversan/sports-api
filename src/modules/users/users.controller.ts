@@ -1,3 +1,4 @@
+import { ProfileService } from './../profile/profile.service';
 import {
   Controller,
   Get,
@@ -6,31 +7,37 @@ import {
   Patch,
   Param,
   Delete,
-  HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { User } from '@prisma/client';
+import { Profile, User } from '@prisma/client';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly profileService: ProfileService,
+  ) {}
 
   @Post()
   async createUser(@Body() data: CreateUserDto) {
-    return await this.usersService.create(data);
+    return await this.usersService.createUser(data);
   }
 
   @Get()
   findAll() {
-    return this.usersService.findAll();
+    return this.usersService.findAllUsers();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string): Promise<User> {
-    return this.usersService.findOne(+id);
+    return this.usersService.findById(+id);
+  }
+
+  @Get(':id/profile') // Rota para obter o perfil pelo userId
+  async getUserProfile(@Param('id') id: string): Promise<Profile | null> {
+    return this.profileService.getProfileByUserId(+id); // Método do serviço que busca o perfil
   }
 
   @Patch(':id')
@@ -38,7 +45,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() data: UpdateUserDto,
   ): Promise<User> {
-    return this.usersService.update(Number(id), data);
+    return this.usersService.updateById(Number(id), data);
   }
 
   @Delete(':id')
