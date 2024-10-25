@@ -1,4 +1,6 @@
-import { IsEmail, IsStrongPassword } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEmail, IsEnum, IsOptional, IsStrongPassword } from 'class-validator';
+import { Role } from 'src/enums/role.enum';
 
 export class CreateUserDto {
   @IsEmail({}, { message: 'Por favor, insira um email válido.' })
@@ -12,4 +14,9 @@ export class CreateUserDto {
     },
   )
   password: string;
+
+  @Type(() => Number)
+  @IsOptional()
+  @IsEnum(Role)
+  role: number;
 }

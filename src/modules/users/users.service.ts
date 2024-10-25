@@ -71,6 +71,10 @@ export class UsersService {
         data.password = await bcrypt.hash(data.password, salt);
       }
 
+      if (typeof data.role === 'string') {
+        data.role = parseInt(data.role, 10); // Converte para número
+      }
+
       return await this.userRepository.updateById(id, data);
     } catch (error) {
       throw error;

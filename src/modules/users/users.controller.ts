@@ -7,12 +7,19 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Profile, User } from '@prisma/client';
+import { Roles } from 'src/decorators/roles.decorator';
+import { Role } from 'src/enums/role.enum';
+import { RoleGuard } from 'src/guards/role.guard';
+import { AuthGuard } from 'src/guards/auth.guard';
 
+@Roles(Role.Admin)
+@UseGuards(AuthGuard, RoleGuard)
 @Controller('users')
 export class UsersController {
   constructor(

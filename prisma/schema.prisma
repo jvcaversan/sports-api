@@ -13,6 +13,7 @@ model User {
   password  String
   profile   Profile?
   createdAt DateTime @default(now())
+  role      Int      @default(1)
 }
 
 model Profile {
