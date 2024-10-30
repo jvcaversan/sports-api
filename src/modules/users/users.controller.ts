@@ -8,6 +8,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,6 +18,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/enums/role.enum';
 import { RoleGuard } from 'src/guards/role.guard';
 import { AuthGuard } from 'src/guards/auth.guard';
+// import { ExcludePasswordInterceptor } from 'src/interceptors/excludepasswordinterceptor';
 
 @Roles(Role.Admin)
 @UseGuards(AuthGuard, RoleGuard)
@@ -27,6 +29,7 @@ export class UsersController {
     private readonly profileService: ProfileService,
   ) {}
 
+  // @UseInterceptors(ExcludePasswordInterceptor)
   @Post()
   async createUser(@Body() data: CreateUserDto) {
     return await this.usersService.createUser(data);
@@ -38,20 +41,17 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<User> {
+  findOne(@Param('id') id: string) {
     return this.usersService.findById(+id);
   }
 
   @Get(':id/profile') // Rota para obter o perfil pelo userId
-  async getUserProfile(@Param('id') id: string): Promise<Profile | null> {
+  async getUserProfile(@Param('id') id: string) {
     return this.profileService.getProfileByUserId(+id); // Método do serviço que busca o perfil
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() data: UpdateUserDto,
-  ): Promise<User> {
+  async update(@Param('id') id: string, @Body() data: UpdateUserDto) {
     return this.usersService.updateById(Number(id), data);
   }
 

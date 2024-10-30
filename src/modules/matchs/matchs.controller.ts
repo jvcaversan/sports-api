@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { MatchsService } from './matchs.service';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
@@ -8,8 +16,8 @@ export class MatchsController {
   constructor(private readonly matchsService: MatchsService) {}
 
   @Post()
-  create(@Body() createMatchDto: CreateMatchDto) {
-    return this.matchsService.create(createMatchDto);
+  create(@Body() createMatchsGroups: CreateMatchDto) {
+    return this.matchsService.create(createMatchsGroups);
   }
 
   @Get()

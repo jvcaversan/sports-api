@@ -30,3 +30,12 @@ model MatchGroup {
   id   Int    @id @default(autoincrement())
   name String @unique
 }
+
+model Match {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  local String
+  team1 String
+  team2 String
+  time  String
+}

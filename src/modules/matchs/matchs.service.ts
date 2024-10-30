@@ -1,26 +1,71 @@
-import { Injectable } from '@nestjs/common';
-import { CreateMatchDto } from './dto/create-match.dto';
-import { UpdateMatchDto } from './dto/update-match.dto';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from 'src/database/prisma.service';
+import { Prisma, User } from '@prisma/client';
+import { Match, MatchGroup } from '.prisma/client';
 
 @Injectable()
 export class MatchsService {
-  create(createMatchDto: CreateMatchDto) {
-    return 'This action adds a new match';
+  constructor(private prisma: PrismaService) {}
+  async create(data: Prisma.MatchCreateInput): Promise<Match> {
+    return this.prisma.match.create({ data });
   }
 
-  findAll() {
-    return `This action returns all matchs`;
+  async findAll(): Promise<Match[]> {
+    return this.prisma.match.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} match`;
+  async findOne(id: number): Promise<Match> {
+    try {
+      if (typeof id !== 'number' || isNaN(id)) {
+        throw new BadRequestException('O ID deve ser um número válido.');
+      }
+      const match = await this.prisma.match.findUnique({
+        where: { id },
+      });
+
+      if (!match) {
+        throw new NotFoundException('Partida não encontrada.');
+      }
+      return match;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  update(id: number, updateMatchDto: UpdateMatchDto) {
-    return `This action updates a #${id} match`;
+  async update(id: number, data: Prisma.MatchUpdateInput): Promise<Match> {
+    try {
+      const match = await this.prisma.match.findUnique({
+        where: { id },
+      });
+      if (!match) {
+        throw new NotFoundException(`Partida não encontrado.`);
+      }
+
+      return await this.prisma.match.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} match`;
+  async remove(id: number): Promise<Match> {
+    const match = await this.prisma.match.findUnique({
+      where: { id },
+    });
+
+    if (!match) {
+      throw new NotFoundException(`Partida com o Id ${id} não encontrado.`);
+    }
+
+    return await this.prisma.match.delete({
+      where: { id },
+    });
   }
 }

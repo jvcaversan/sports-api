@@ -10,11 +10,11 @@ import { PrismaService } from 'src/database/prisma.service';
 export class ProfileService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllProfiles(): Promise<Profile[]> {
+  async getAllProfiles() {
     return this.prisma.profile.findMany();
   }
 
-  async getProfileByUserId(userId: number): Promise<Profile> {
+  async getProfileByUserId(userId: number) {
     try {
       if (typeof userId !== 'number' || isNaN(userId)) {
         throw new BadRequestException('O ID deve ser um número válido.');
@@ -32,10 +32,7 @@ export class ProfileService {
     }
   }
 
-  async updateProfile(
-    userId: number,
-    data: Partial<Profile>,
-  ): Promise<Profile> {
+  async updateProfile(userId: number, data: Partial<Profile>) {
     return this.prisma.profile.update({
       where: { userId },
       data,

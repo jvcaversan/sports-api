@@ -5,13 +5,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly userRepository: UsersRepository) {}
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+  async createUser(data: CreateUserDto) {
     const existingUser = await this.userRepository.findByEmail(data.email);
 
     if (existingUser) {
@@ -24,16 +25,18 @@ export class UsersService {
 
     const user = await this.userRepository.create(data);
 
+    delete user.password;
+
     return user;
   }
 
-  async findAllUsers(): Promise<User[]> {
+  async findAllUsers() {
     const users = await this.userRepository.findAllUsers();
 
     return users;
   }
 
-  async findById(id: number): Promise<User> {
+  async findById(id: number) {
     try {
       if (typeof id !== 'number' || isNaN(id)) {
         throw new BadRequestException('O ID deve ser um número válido.');
@@ -49,7 +52,7 @@ export class UsersService {
     }
   }
 
-  async updateById(id: number, data: Prisma.UserUpdateInput): Promise<User> {
+  async updateById(id: number, data: Prisma.UserUpdateInput) {
     try {
       const user = await this.userRepository.findById(id);
       if (!user) {

@@ -30,10 +30,12 @@ export class AuthController {
   async reset(@Body() { password, token }: AuthResetDto) {
     return this.authService.reset(password, token);
   }
+
   @UseGuards(AuthGuard)
   @Post('me')
   async me(@User() user) {
     const profile = user.profile;
+    delete user.password;
     return { user, profile };
   }
 }
