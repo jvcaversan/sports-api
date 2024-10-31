@@ -34,8 +34,7 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @Post('me')
   async me(@User() user) {
-    const profile = user.profile;
     delete user.password;
-    return { user, profile };
+    return { user };
   }
 }

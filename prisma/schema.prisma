@@ -8,12 +8,14 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  profile   Profile?
-  createdAt DateTime @default(now())
-  role      Int      @default(1)
+  id            Int              @id @default(autoincrement())
+  email         String           @unique
+  password      String
+  profile       Profile?
+  createdAt     DateTime         @default(now())
+  role          Int              @default(1) // 1 = user, 2 = mod 3 = admin
+  matchGroups   UserMatchGroup[] // Associações aos grupos com roles
+  createdGroups MatchGroup[]     @relation("CreatedGroups") // Grupos que o usuário criou
 }
 
 model Profile {
@@ -27,8 +29,24 @@ model Profile {
 }
 
 model MatchGroup {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id        Int              @id @default(autoincrement())
+  name      String           @unique
+  adminId   Int // ID do usuário administrador
+  admin     User             @relation("CreatedGroups", fields: [adminId], references: [id]) // Referência ao administrador
+  users     UserMatchGroup[] // Associações aos usuários com roles
+  createdAt DateTime         @default(now())
+}
+
+model UserMatchGroup {
+  id           Int    @id @default(autoincrement())
+  userId       Int
+  matchGroupId Int
+  role         String // Ex.: 'admin', 'user', 'moderator'
+
+  user       User       @relation(fields: [userId], references: [id])
+  matchGroup MatchGroup @relation(fields: [matchGroupId], references: [id])
+
+  @@unique([userId, matchGroupId]) // Garantir que um usuário pertence a um grupo apenas uma vez
 }
 
 model Match {

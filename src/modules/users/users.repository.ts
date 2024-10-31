@@ -38,6 +38,13 @@ export class UsersRepository {
       where: { id },
       include: {
         profile: true,
+        createdGroups: true,
+        matchGroups: {
+          include: {
+            matchGroup: true, // Inclui informações do grupo
+            user: true, // Informações do usuário associadas
+          },
+        },
       },
     });
   }

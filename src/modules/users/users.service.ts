@@ -19,13 +19,13 @@ export class UsersService {
       throw new ConflictException('Email já cadastrado');
     }
 
-    if (data.password) {
-      data.password = await bcrypt.hash(data.password, 10);
-    }
+    // if (data.password) {
+    //   data.password = await bcrypt.hash(data.password, 10);
+    // }
 
     const user = await this.userRepository.create(data);
 
-    delete user.password;
+    // delete user.password;
 
     return user;
   }

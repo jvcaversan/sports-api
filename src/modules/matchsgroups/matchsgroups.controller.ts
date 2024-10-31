@@ -6,18 +6,28 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { MatchGroupService } from './matchsgroups.service';
 import { CreateMatchsGroupsDto } from './dto/create-matchsgroup.dto';
 import { UpdateMatchsGroupsDto } from './dto/update-matchsgroup.dto';
+import { AuthGuard } from 'src/guards/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('matchsgroups')
 export class MatchsgroupsController {
   constructor(private readonly matchsGroupsService: MatchGroupService) {}
 
+  @UseGuards(AuthGuard)
   @Post()
-  create(@Body() createMatchsGroups: CreateMatchsGroupsDto) {
-    return this.matchsGroupsService.create(createMatchsGroups);
+  create(@Body() createMatchsGroups: CreateMatchsGroupsDto, @Request() req) {
+    const userId = req.user.id;
+    const matchGroupData = {
+      ...createMatchsGroups,
+      admin: userId,
+    };
+    return this.matchsGroupsService.create(matchGroupData, userId);
   }
 
   @Get()

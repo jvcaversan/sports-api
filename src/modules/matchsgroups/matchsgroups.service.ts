@@ -11,7 +11,10 @@ import { MatchGroup } from '.prisma/client';
 @Injectable()
 export class MatchGroupService {
   constructor(private prisma: PrismaService) {}
-  async create(data: Prisma.MatchGroupCreateInput): Promise<MatchGroup> {
+  async create(
+    data: Prisma.MatchGroupCreateInput,
+    userId: number,
+  ): Promise<MatchGroup> {
     const existingMatchGroup = await this.prisma.matchGroup.findUnique({
       where: { name: data.name },
     });
@@ -20,7 +23,28 @@ export class MatchGroupService {
       throw new ConflictException('Grupo já cadastrado');
     }
 
-    return this.prisma.matchGroup.create({ data });
+    const existingGroup = await this.prisma.matchGroup.findFirst({
+      where: { adminId: userId },
+    });
+
+    if (existingGroup) {
+      throw new ConflictException(
+        'O usuário já possui um grupo criado e não pode criar outro.',
+      );
+    }
+
+    return this.prisma.matchGroup.create({
+      data: {
+        name: data.name,
+        adminId: userId,
+        users: {
+          create: {
+            userId,
+            role: 'admin',
+          },
+        },
+      },
+    });
   }
 
   async findAll(): Promise<MatchGroup[]> {

@@ -20,7 +20,7 @@ import { RoleGuard } from 'src/guards/role.guard';
 import { AuthGuard } from 'src/guards/auth.guard';
 // import { ExcludePasswordInterceptor } from 'src/interceptors/excludepasswordinterceptor';
 
-@Roles(Role.Admin)
+// @Roles(Role.Admin)
 @UseGuards(AuthGuard, RoleGuard)
 @Controller('users')
 export class UsersController {
