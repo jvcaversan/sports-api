@@ -1,23 +1,28 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+// create-match.dto.ts
+import { IsNotEmpty, IsString, IsInt } from 'class-validator';
 
 export class CreateMatchDto {
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   name: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   local: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   team1: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   team2: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   time: string;
+
+  @IsNotEmpty()
+  @IsInt()
+  matchGroupId: number;
 }

@@ -41,8 +41,12 @@ export class UsersRepository {
         createdGroups: true,
         matchGroups: {
           include: {
-            matchGroup: true, // Inclui informações do grupo
-            user: true, // Informações do usuário associadas
+            matchGroup: {
+              include: {
+                matches: true, // Inclui as partidas do grupo de partidas
+              },
+            },
+            user: true,
           },
         },
       },

@@ -1,18 +1,50 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import { Match, MatchGroup } from '.prisma/client';
+import { CreateMatchDto } from './dto/create-match.dto';
 
 @Injectable()
 export class MatchsService {
   constructor(private prisma: PrismaService) {}
-  async create(data: Prisma.MatchCreateInput): Promise<Match> {
-    return this.prisma.match.create({ data });
+  async create(createMatchDto: CreateMatchDto, userId: number): Promise<Match> {
+    const { matchGroupId, ...matchData } = createMatchDto;
+
+    // Verifica se o grupo de partidas existe
+    const matchGroup = await this.prisma.matchGroup.findUnique({
+      where: { id: matchGroupId },
+      include: { users: true }, // Inclui os usuários no grupo para verificar a função
+    });
+
+    if (!matchGroup) {
+      throw new NotFoundException('Match group not found');
+    }
+
+    // Verifica se o usuário é um admin ou moderador do grupo
+    const userInGroup = matchGroup.users.find((user) => user.userId === userId);
+    if (
+      !userInGroup ||
+      (userInGroup.role !== 'admin' && userInGroup.role !== 'moderator')
+    ) {
+      throw new NotFoundException(
+        'User is not authorized to create a match in this group',
+      );
+    }
+
+    // Cria a partida
+    return this.prisma.match.create({
+      data: {
+        ...matchData,
+        matchGroup: { connect: { id: matchGroupId } },
+        createdBy: { connect: { id: userId } },
+      },
+    });
   }
 
   async findAll(): Promise<Match[]> {

@@ -6,18 +6,24 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { MatchsService } from './matchs.service';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
+import { AuthGuard } from 'src/guards/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('matchs')
 export class MatchsController {
   constructor(private readonly matchsService: MatchsService) {}
 
   @Post()
-  create(@Body() createMatchsGroups: CreateMatchDto) {
-    return this.matchsService.create(createMatchsGroups);
+  async create(@Body() createMatchDto: CreateMatchDto, @Request() req) {
+    const userId = req.user.id;
+    return this.matchsService.create(createMatchDto, userId);
   }
 
   @Get()

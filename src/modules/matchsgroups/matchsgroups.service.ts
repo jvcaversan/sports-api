@@ -48,21 +48,29 @@ export class MatchGroupService {
   }
 
   async findAll(): Promise<MatchGroup[]> {
-    return this.prisma.matchGroup.findMany();
+    return this.prisma.matchGroup.findMany({
+      include: {
+        matches: true, // Inclui as partidas associadas a cada grupo de partidas
+      },
+    });
   }
-
   async findOne(id: number): Promise<MatchGroup> {
     try {
       if (typeof id !== 'number' || isNaN(id)) {
         throw new BadRequestException('O ID deve ser um número válido.');
       }
+
       const matchGroup = await this.prisma.matchGroup.findUnique({
         where: { id },
+        include: {
+          matches: true, // Inclui as partidas associadas a este grupo de partidas
+        },
       });
 
       if (!matchGroup) {
-        throw new NotFoundException('Usuário não encontrado.');
+        throw new NotFoundException('Grupo de partidas não encontrado.');
       }
+
       return matchGroup;
     } catch (error) {
       throw error;
